@@ -1,11 +1,13 @@
 import React from "react";
 import { cn } from "~/utils";
+import Player, { PlayerProps } from "./Player";
 
 interface TileProps {
   index: number;
   className?: string;
   isCorner?: boolean;
   onClick?: () => void;
+  players?: PlayerProps[];
 }
 
 const Tile: React.FC<TileProps> = ({
@@ -13,6 +15,7 @@ const Tile: React.FC<TileProps> = ({
   className,
   isCorner = false,
   onClick,
+  players = [],
 }) => {
   return (
     <div
@@ -44,15 +47,33 @@ const Tile: React.FC<TileProps> = ({
       <span className="absolute top-1 left-1 text-neutral-400 text-[10px]">
         {index}
       </span>
-      {isCorner && (
-        <div className="text-center text-[10px] text-neutral-600">
-          {index === 1
-            ? "START"
-            : index === 10
-            ? "JAIL"
-            : index === 20
-            ? "FREE"
-            : "END"}
+
+      {/* Display players */}
+      {players.length > 0 && (
+        <div
+          className={cn(
+            "absolute flex flex-wrap gap-1.5 justify-center items-center",
+            players.length === 1
+              ? "inset-0"
+              : players.length <= 4
+              ? "inset-1"
+              : "inset-0.5 gap-1"
+          )}
+        >
+          {players.map((player) => (
+            <Player
+              key={player.id}
+              id={player.id}
+              name={player.name}
+              className={cn(
+                players.length === 1
+                  ? "w-10 h-10"
+                  : players.length <= 4
+                  ? "w-8 h-8"
+                  : "w-6 h-6"
+              )}
+            />
+          ))}
         </div>
       )}
     </div>
