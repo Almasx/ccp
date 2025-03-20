@@ -1,0 +1,8 @@
+<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="250" fill="#3b82f6" />
+  <circle cx="200" cy="125" r="80" fill="#60a5fa" />
+  <rect x="120" y="105" width="160" height="40" fill="#1e40af" />
+  <text x="200" y="135" font-family="Arial" font-size="24" text-anchor="middle" fill="white">
+    Situation Card 1
+  </text>
+</svg> 

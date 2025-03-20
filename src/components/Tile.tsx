@@ -1,6 +1,7 @@
 import React from "react";
 import { cn } from "~/utils";
 import Player, { PlayerProps } from "./Player";
+import { motion } from "framer-motion";
 
 interface TileProps {
   index: number;
@@ -8,6 +9,8 @@ interface TileProps {
   isCorner?: boolean;
   onClick?: () => void;
   players?: PlayerProps[];
+  hasSituation?: boolean;
+  activeTile?: boolean;
 }
 
 const Tile: React.FC<TileProps> = ({
@@ -16,6 +19,8 @@ const Tile: React.FC<TileProps> = ({
   isCorner = false,
   onClick,
   players = [],
+  hasSituation = true,
+  activeTile = false,
 }) => {
   return (
     <div
@@ -23,6 +28,7 @@ const Tile: React.FC<TileProps> = ({
       className={cn(
         className,
         isCorner ? "bg-gray-50" : "bg-white",
+        activeTile ? "ring-2 ring-blue-500" : "",
         "w-20 h-20",
         `m-0.5
         border border-neutral-300
@@ -47,6 +53,22 @@ const Tile: React.FC<TileProps> = ({
       <span className="absolute top-1 left-1 text-neutral-400 text-[10px]">
         {index}
       </span>
+
+      {/* Display situation card indicator */}
+      {hasSituation && (
+        <motion.div
+          className="absolute bottom-1 right-1 w-3 h-3 bg-amber-400 rounded-full"
+          initial={{ scale: 0.8, opacity: 0.8 }}
+          animate={{
+            scale: [0.8, 1, 0.8],
+            opacity: [0.8, 1, 0.8],
+          }}
+          transition={{
+            repeat: Infinity,
+            duration: 2,
+          }}
+        />
+      )}
 
       {/* Display players */}
       {players.length > 0 && (

@@ -1,9 +1,17 @@
 "use client";
 
-import React, { useMemo, useState, useCallback } from "react";
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import Tile from "./Tile";
 import { PlayerProps } from "./Player";
 import { KeyButton } from "./KeyButton";
+import SituationCard, { SituationData } from "./SituationCard";
+import { generateSituationData } from "../data/situationData";
 
 interface GameBoardProps {
   size?: number;
@@ -74,6 +82,63 @@ const GameBoard: React.FC<GameBoardProps> = ({ size = 10 }) => {
     [size]
   );
 
+  // Tile refs for positioning animations
+  const tileRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  // Situation cards state
+  const [situations, setSituations] = useState<Record<number, SituationData>>(
+    {}
+  );
+  const [activeSituation, setActiveSituation] = useState<SituationData | null>(
+    null
+  );
+  const [activeTilePosition, setActiveTilePosition] = useState<
+    { x: number; y: number } | undefined
+  >(undefined);
+  const [activeTileIndex, setActiveTileIndex] = useState<number | null>(null);
+
+  // Initialize situation data
+  useEffect(() => {
+    const situationData = generateSituationData(totalTiles);
+    setSituations(situationData);
+  }, [totalTiles]);
+
+  // Calculate tile position for animation
+  const calculateTilePosition = useCallback((tileIndex: number) => {
+    const tileElement = tileRefs.current[tileIndex];
+    if (!tileElement) return undefined;
+
+    const rect = tileElement.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // Calculate position relative to the viewport center
+    const viewportCenterX = window.innerWidth / 2;
+    const viewportCenterY = window.innerHeight / 2;
+
+    return {
+      x: centerX - viewportCenterX,
+      y: centerY - viewportCenterY,
+    };
+  }, []);
+
+  // Show situation card for a specific tile
+  const showSituationCard = useCallback(
+    (tileIndex: number) => {
+      const tilePosition = calculateTilePosition(tileIndex);
+      setActiveTilePosition(tilePosition);
+      setActiveSituation(situations[tileIndex] || null);
+      setActiveTileIndex(tileIndex);
+    },
+    [situations, calculateTilePosition]
+  );
+
+  // Close situation card
+  const closeSituationCard = useCallback(() => {
+    setActiveSituation(null);
+    setActiveTileIndex(null);
+  }, []);
+
   // Get players at a specific tile index
   const getPlayersAtTile = (tileIndex: number): PlayerProps[] => {
     return players.filter((player) => playerPositions[player.id] === tileIndex);
@@ -117,13 +182,25 @@ const GameBoard: React.FC<GameBoardProps> = ({ size = 10 }) => {
           if (newPosition <= 0) newPosition = totalTiles + newPosition;
         }
 
+        // Show situation card after moving
+        setTimeout(() => {
+          showSituationCard(newPosition);
+        }, 500);
+
         return { ...prev, p1: newPosition };
       });
 
       setStatus("idle");
       setDiceValue(null);
     },
-    [diceValue, totalTiles, status]
+    [diceValue, totalTiles, status, showSituationCard]
+  );
+
+  const handleTileClick = useCallback(
+    (tileIndex: number) => {
+      showSituationCard(tileIndex);
+    },
+    [showSituationCard]
   );
 
   const board = useMemo(() => {
@@ -132,16 +209,27 @@ const GameBoard: React.FC<GameBoardProps> = ({ size = 10 }) => {
       <div
         key={`tile-${index}`}
         style={{ gridRow: position.row, gridColumn: position.col }}
+        ref={(el) => {
+          tileRefs.current[index] = el;
+        }}
       >
         <Tile
           index={index}
           isCorner={isCorner}
-          onClick={() => {}}
+          onClick={() => handleTileClick(index)}
           players={getPlayersAtTile(index)}
+          hasSituation={!!situations[index]}
+          activeTile={activeTileIndex === index}
         />
       </div>
     ));
-  }, [tilePositions, playerPositions]);
+  }, [
+    tilePositions,
+    playerPositions,
+    situations,
+    activeTileIndex,
+    handleTileClick,
+  ]);
 
   const controlPanel = useMemo(() => {
     switch (status) {
@@ -209,6 +297,13 @@ const GameBoard: React.FC<GameBoardProps> = ({ size = 10 }) => {
           {controlPanel}
         </div>
       </div>
+
+      {/* Situation Card Portal */}
+      <SituationCard
+        situation={activeSituation}
+        onClose={closeSituationCard}
+        tilePosition={activeTilePosition}
+      />
     </div>
   );
 };
